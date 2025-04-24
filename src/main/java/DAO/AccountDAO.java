@@ -26,6 +26,9 @@ public class AccountDAO {
     
     public Account insertUser(Account acc) {
         Connection connection = ConnectionUtil.getConnection();
+        if(acc.getUsername().isEmpty() || acc.getPassword().length() < 4) {
+            return null;
+        }
         try {
             String sql = "INSERT INTO account (username, password) VALUES (?, ?)";
             PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);

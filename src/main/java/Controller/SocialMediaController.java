@@ -8,6 +8,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+
+import static org.mockito.ArgumentMatchers.matches;
+
 import java.util.List;
 
 /**
@@ -35,6 +38,10 @@ public class SocialMediaController {
         app.post("/login", this::loginHandler);
         app.post("/messages", this::createMessageHandler);
         app.get("/messages", this::getMessagesHandler);
+        app.get("/messages/{message_id}", this::getMessageIdHandler);
+        app.delete("/messages/{message_id}", this::deleteMessageHandler);
+        app.patch("/messages/{message_id}", this::updateMessageById);
+        app.get("/accounts/{account_id}/messages", this::getAllMessagesByAccount);
 
         return app;
     }
@@ -81,9 +88,49 @@ public class SocialMediaController {
         ctx.json(msgs);
     }
 
+    private void getMessageIdHandler(Context ctx) {
+        int id = Integer.parseInt(ctx.pathParam("message_id"));
+        Message msg = messageService.getMessageById(id);
+        if(msg != null) {
+            ctx.json(msg);
+        } else {
+            ctx.status(200);
+        }
+    }
+
     private void deleteMessageHandler(Context ctx) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
-        Message msg = mapper.readValue(ctx.body(), Message.class);
-        Message deleted = messageService.deleteMessageById(1);
+        int id = Integer.parseInt(ctx.pathParam("message_id"));
+
+        Message message = messageService.deleteMessageById(id);
+        if(message != null) {
+            ctx.json(mapper.writeValueAsString(message));
+        } else {
+            ctx.status(200);
+        }
+    }
+
+    private void updateMessageById(Context ctx) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        int id = Integer.parseInt(ctx.pathParam("message_id"));
+        Message msg = messageService.getMessageById(id);
+        if(msg != null) {
+            msg = mapper.readValue(ctx.body(), Message.class);
+            msg.setMessage_id(id);
+            Message temp = messageService.updateMessageById(msg);
+            if(temp != null) {
+                ctx.json(mapper.writeValueAsString(temp));
+            } else {
+                ctx.status(400);
+            }
+        } else {
+            ctx.status(400);
+        }
+    }
+
+    private void getAllMessagesByAccount(Context ctx) {
+        int id = Integer.parseInt(ctx.pathParam("account_id"));
+        List<Message> msgs = messageService.getAllMessagesFromUser(id);
+        ctx.json(msgs);
     }
 }
