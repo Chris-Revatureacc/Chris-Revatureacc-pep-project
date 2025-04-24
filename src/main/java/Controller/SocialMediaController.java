@@ -133,4 +133,5 @@ public class SocialMediaController {
         List<Message> msgs = messageService.getAllMessagesFromUser(id);
         ctx.json(msgs);
     }
+    //making sure it committed
 }
